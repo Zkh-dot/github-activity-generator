@@ -7,7 +7,6 @@ from random import randint
 from subprocess import Popen
 import sys
 
-
 def main(def_args=sys.argv[1:]) -> None:
     args = arguments(def_args)
     curr_date = datetime.now()
@@ -28,6 +27,7 @@ def main(def_args=sys.argv[1:]) -> None:
     if days_after < 0:
         sys.exit('days_after must not be negative')
 
+    create_directory(directory)
     chdir_to_repo(repository, directory)
 
     if user_name is not None:
@@ -60,21 +60,23 @@ def contribute(date) -> None:
     run(['git', 'add', '.'])
     run(['git', 'commit', '-m', '"%s"' % message(date),
          '--date', date.strftime('"%Y-%m-%d %H:%M:%S"')])
-    
+
 
 def chdir_to_repo(repository, directory) -> None:
-    git_command = ['git', repository, directory]
+    if repository is None:
+        return
+
     if ".git" in os.listdir():
-        git_command.insert(1, 'submodule')
-        git_command.insert(2, 'add')
+        git_command = ['git', 'submodule', 'add', repository, directory]
     else:
-        git_command.insert(1, 'clone')
+        git_command = ['git', 'clone', repository, directory]
+
     if directory not in os.listdir():
         try:
             run(git_command)
         except Exception as e:
             print(e)
-            raise Exception('Repository does not exist. Please check if the link is ssh and do your user has access to your ssh keys')
+            raise Exception('Repository does not exist. Please check if the link is SSH and do your user has access to your ssh keys')
     os.chdir(directory)
     run(['git', 'pull'])
 
@@ -138,6 +140,12 @@ def arguments(argsval) -> argparse.Namespace:
                         last commit will be on a future date which is the
                         current date plus 30 days.""")
     return parser.parse_args(argsval)
+
+
+def create_directory(directory: str) -> None:
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    os.chdir(directory)
 
 
 if __name__ == "__main__":
