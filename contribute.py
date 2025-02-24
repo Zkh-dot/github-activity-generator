@@ -66,10 +66,14 @@ def chdir_to_repo(repository, directory) -> None:
     if repository is None:
         return
 
+    git_command = ['git', repository, directory]
+
     if ".git" in os.listdir():
-        git_command = ['git', 'submodule', 'add', repository, directory]
+        git_command.insert(1, 'submodule')
+        git_command.insert(2, 'add')
+        print("it appears you are running this script in repo. adding new repo as submodule")
     else:
-        git_command = ['git', 'clone', repository, directory]
+        git_command.insert(1, 'clone')
 
     if directory not in os.listdir():
         try:
